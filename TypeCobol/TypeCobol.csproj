@@ -17,6 +17,7 @@
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>false</RestorePackages>
+    <DoNotCopyLocalIfInGac>true</DoNotCopyLocalIfInGac>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -350,6 +351,7 @@
     <Compile Include="Compiler\Parser\SyntaxElementBuilder.cs" />
     <Compile Include="Compiler\Parser\CodeElementsDocument.cs" />
     <Compile Include="Compiler\Parser\CodeElementsTracingParser.cs" />
+    <Compile Include="Compiler\Preprocessor\CodeElementLineEnumerator.cs" />
     <Compile Include="Compiler\Preprocessor\CompilerDirectiveBuilder.cs" />
     <Compile Include="Compiler\Preprocessor\CopyTokensLinesIterator.cs" />
     <Compile Include="Compiler\Preprocessor\ImportedTokensDocument.cs" />

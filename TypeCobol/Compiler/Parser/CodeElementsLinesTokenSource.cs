@@ -13,13 +13,17 @@ namespace TypeCobol.Compiler.Parser
     public class CodeElementsLinesTokenSource : ITokenSource
     {
         private string sourceFileName;
-        private ISearchableReadOnlyList<ICodeElementsLine> codeElementsLines;       
 
         public CodeElementsLinesTokenSource(string sourceFileName, ISearchableReadOnlyList<ICodeElementsLine> codeElementsLines)
         {
             this.sourceFileName = sourceFileName;
-            this.codeElementsLines = codeElementsLines;
             this.codeElementsLinesEnumerator = codeElementsLines.GetEnumerator();
+        }
+
+        public CodeElementsLinesTokenSource(string sourceFileName, IEnumerator<ICodeElementsLine> codeElementsLinesEnumerator)
+        {
+            this.sourceFileName = sourceFileName;
+            this.codeElementsLinesEnumerator = codeElementsLinesEnumerator;
         }
 
         IEnumerator<ICodeElementsLine> codeElementsLinesEnumerator;

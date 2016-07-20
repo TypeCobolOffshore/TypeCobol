@@ -7,6 +7,7 @@ using TypeCobol.Compiler.CodeModel;
 using TypeCobol.Compiler.Concurrency;
 using TypeCobol.Compiler.Directives;
 using TypeCobol.Compiler.Parser.Generated;
+using TypeCobol.Compiler.Preprocessor;
 using TypeCobol.Compiler.Scanner;
 using TypeCobol.Compiler.Text;
 
@@ -20,10 +21,20 @@ namespace TypeCobol.Compiler.Parser
     {
         public static void ParseProgramOrClass(TextSourceInfo textSourceInfo, ISearchableReadOnlyList<ICodeElementsLine> codeElementsLines, TypeCobolOptions compilerOptions, SymbolTable customSymbols, out Program newProgram, out Class newClass, out IList<ParserDiagnostic> diagnostics)
         {
+            ITokensLinesIterator tokensIterator = ProcessedTokensDocument.GetProcessedTokensIterator(textSourceInfo, codeElementsLines);
+
+
             // Create an Antlr compatible token source on top a the token iterator
-            CodeElementsLinesTokenSource tokenSource = new CodeElementsLinesTokenSource(
-                textSourceInfo.Name,
-                codeElementsLines);
+            bool newVersion = true;
+            CodeElementsLinesTokenSource tokenSource;
+            if (newVersion)
+            {
+                tokenSource = new CodeElementsLinesTokenSource(textSourceInfo.Name, new CodeElementLineEnumerator(tokensIterator));
+            }
+            else
+            {
+                tokenSource = new CodeElementsLinesTokenSource(textSourceInfo.Name, codeElementsLines);
+            }
 
             // Init parser
             ITokenStream tokenStream = new TokensLinesTokenStream(tokenSource, Token.CHANNEL_SourceTokens);
@@ -46,8 +57,10 @@ namespace TypeCobol.Compiler.Parser
             programClassBuilder.Dispatcher = new NodeDispatcher();
             programClassBuilder.Dispatcher.CreateListeners();
             walker.Walk(programClassBuilder, codeElementParseTree);
-                        
+
             // Register compiler results
+
+            //Issue-235 : with newVersion, newProgram contains all CodeElements inside COPY statement.
             newProgram = programClassBuilder.Program;
             newClass = programClassBuilder.Class;
             diagnostics = errorListener.Diagnostics;
