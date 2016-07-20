@@ -23,9 +23,9 @@ namespace TypeCobol.Compiler.Parser
         /// <summary>
         /// Initial parsing of a complete document
         /// </summary>
-        internal static void ParseDocument(TextSourceInfo textSourceInfo, ISearchableReadOnlyList<CodeElementsLine> documentLines, TypeCobolOptions compilerOptions)
+        internal static IList<DocumentChange<ICodeElementsLine>> ParseDocument(TextSourceInfo textSourceInfo, ISearchableReadOnlyList<CodeElementsLine> documentLines, TypeCobolOptions compilerOptions, out ISearchableReadOnlyList<ICodeElementsLine> codeElementsLines)
         {
-            ParseProcessedTokensLinesChanges(textSourceInfo, documentLines, null, null, compilerOptions);
+            return ParseProcessedTokensLinesChanges(textSourceInfo, documentLines, null, null, compilerOptions, out codeElementsLines);
         }
 
         /// <summary>
@@ -55,8 +55,11 @@ namespace TypeCobol.Compiler.Parser
         /// <summary>
         /// Incremental parsing of a set of processed tokens lines changes
         /// </summary>
-        internal static IList<DocumentChange<ICodeElementsLine>> ParseProcessedTokensLinesChanges(TextSourceInfo textSourceInfo, ISearchableReadOnlyList<CodeElementsLine> documentLines, IList<DocumentChange<IProcessedTokensLine>> processedTokensLinesChanges, PrepareDocumentLineForUpdate prepareDocumentLineForUpdate, TypeCobolOptions compilerOptions)
+        internal static IList<DocumentChange<ICodeElementsLine>> ParseProcessedTokensLinesChanges(TextSourceInfo textSourceInfo, ISearchableReadOnlyList<CodeElementsLine> documentLines, IList<DocumentChange<IProcessedTokensLine>> processedTokensLinesChanges, PrepareDocumentLineForUpdate prepareDocumentLineForUpdate, TypeCobolOptions compilerOptions, out ISearchableReadOnlyList<ICodeElementsLine> codeElementsLines)
         {
+            var _codeElementsLines = new List<ICodeElementsLine>();
+
+            
             // Collect all changes applied to the processed tokens lines during the incremental scan
             IList<DocumentChange<ICodeElementsLine>> codeElementsLinesChanges = new List<DocumentChange<ICodeElementsLine>>();
 
@@ -154,6 +157,7 @@ namespace TypeCobol.Compiler.Parser
                 {
                     // Get the first line that was parsed                
                     CodeElementsLine codeElementsLine = ((CodeElementsLine)((Token)codeElementParseTree.Start).TokensLine);
+                    
 
                     // Register that this line was updated
                     // COMMENTED FOR THE SAKE OF PERFORMANCE -- SEE ISSUE #160
@@ -179,6 +183,7 @@ namespace TypeCobol.Compiler.Parser
 
                         // Add code element to the list                    
                         codeElementsLine.AddCodeElement(codeElement);
+                        _codeElementsLines.Add(codeElementsLine);
                         foreach (ParserDiagnostic d in errorListener.Diagnostics)
                         {
                             codeElement.Diagnostics.Add(d);
@@ -221,6 +226,9 @@ namespace TypeCobol.Compiler.Parser
                 }
             }
             while (tokenStream.La(1) >= 0);
+
+
+            codeElementsLines = _codeElementsLines.ToImmutableList();
 
             return codeElementsLinesChanges;
         }

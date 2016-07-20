@@ -70,15 +70,20 @@ namespace TypeCobol.Compiler
                 if (scanAllDocumentLines)
                 {
                     // Parse the whole document for the first time
-                    CodeElementsParserStep.ParseDocument(TextSourceInfo, ((ImmutableList<CodeElementsLine>)processedTokensDocument.Lines), CompilerOptions);
+                    ISearchableReadOnlyList<ICodeElementsLine> codeElementsLines;
+                    CodeElementsParserStep.ParseDocument(TextSourceInfo, ((ImmutableList<CodeElementsLine>)processedTokensDocument.Lines), CompilerOptions, out codeElementsLines);
 
                     // Create the first code elements document snapshot
-                    CodeElementsDocumentSnapshot = new CodeElementsDocument(processedTokensDocument, new DocumentVersion<ICodeElementsLine>(this), ((ImmutableList<CodeElementsLine>)processedTokensDocument.Lines));
+                    CodeElementsDocumentSnapshot = new CodeElementsDocument(processedTokensDocument, new DocumentVersion<ICodeElementsLine>(this), codeElementsLines);
+                    //Previous code:
+                    //CodeElementsDocumentSnapshot = new CodeElementsDocument(processedTokensDocument, new DocumentVersion<ICodeElementsLine>(this), ((ImmutableList<CodeElementsLine>)processedTokensDocument.Lines));
+                    
                 }
                 else
                 {
+                    ISearchableReadOnlyList<ICodeElementsLine> codeElementsLines;
                     ImmutableList<CodeElementsLine>.Builder codeElementsDocumentLines = ((ImmutableList<CodeElementsLine>)processedTokensDocument.Lines).ToBuilder();
-                    IList<DocumentChange<ICodeElementsLine>> documentChanges = CodeElementsParserStep.ParseProcessedTokensLinesChanges(TextSourceInfo, codeElementsDocumentLines, processedTokensLineChanges, PrepareDocumentLineForUpdate, CompilerOptions);
+                    IList<DocumentChange<ICodeElementsLine>> documentChanges = CodeElementsParserStep.ParseProcessedTokensLinesChanges(TextSourceInfo, codeElementsDocumentLines, processedTokensLineChanges, PrepareDocumentLineForUpdate, CompilerOptions, out codeElementsLines);
 
                     // Create a new version of the document to track these changes
                     DocumentVersion<ICodeElementsLine> currentCodeElementsLinesVersion = previousCodeElementsDocument.CurrentVersion;
@@ -90,7 +95,12 @@ namespace TypeCobol.Compiler
                     currentCodeElementsLinesVersion = currentCodeElementsLinesVersion.next;
 
                     // Update the code elements document snapshot
-                    CodeElementsDocumentSnapshot = new CodeElementsDocument(processedTokensDocument, currentCodeElementsLinesVersion, codeElementsDocumentLines.ToImmutable());
+                    
+                    //New code, but it doesn't work with incremental mode:
+                    CodeElementsDocumentSnapshot = new CodeElementsDocument(processedTokensDocument, currentCodeElementsLinesVersion, codeElementsLines);
+                    //Previous code:
+                    //CodeElementsDocumentSnapshot = new CodeElementsDocument(processedTokensDocument, currentCodeElementsLinesVersion, codeElementsDocumentLines.ToImmutable());
+
                 }
 
                 // Stop perf measurement
@@ -146,7 +156,7 @@ namespace TypeCobol.Compiler
                     Class newClass;
                     IList<ParserDiagnostic> newDiagnostics;
                     //TODO cast to ImmutableList<CodeElementsLine> sometimes fails here
-                    ProgramClassParserStep.ParseProgramOrClass(TextSourceInfo, ((ImmutableList<CodeElementsLine>)codeElementsDocument.Lines), CompilerOptions, CustomSymbols, out newProgram, out newClass, out newDiagnostics);
+                    ProgramClassParserStep.ParseProgramOrClass(TextSourceInfo, codeElementsDocument.Lines, CompilerOptions, CustomSymbols, out newProgram, out newClass, out newDiagnostics);
 
                     // Capture the result of the parse in a new snapshot
                     ProgramClassDocumentSnapshot = new ProgramClassDocument(
